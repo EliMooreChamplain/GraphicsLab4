@@ -80,6 +80,20 @@ float lenSq(vec2 x)
 {
     return dot(x,x);
 }
+
+struct PointLight
+{
+    vec4 center;
+    vec4 color;
+    float intensity;
+};
+
+void PLInit(out PointLight pl, in vec4 center, in vec4 color, in float intensity)
+{
+    pl.center = center;
+    pl.color = color;
+    pl.intensity = intensity;
+}
     
 
 // calcColor: calculate the color of a pixel given a ray
@@ -113,13 +127,80 @@ vec4 calcColor(in vec4 rayDirection, in vec4 rayOrigin)
         //We already know the length of the vector, so we don't have to use normalize
         vec3 normal = //normalize(position - sphere.center.xyz);
             (position - sphere.center.xyz) / sphere.radius;
+        
+        //------------------------------------------------------
+    	PointLight pl;
+    	PLInit(
+               //Point light
+               pl, 
+               //Center
+               vec4
+               (
+                    1.5,//* sin(degrees(0.5 * iTime * 0.318)),// - 0.5,
+                    1.5,//* cos(degrees(0.5 * iTime * 0.318)),// - 0.5,
+                   -0.5,
+                   0.0
+               ),
+               //Color
+               vec4(
+                   0.9,
+                   0.5,
+                   0.3,
+                   1.0
+               ),  
+               //Intensity
+               20.0
+        );
+		
+    	
+    	float diffuseIntensity;
+    	float diffuseCoefficient;
+    	float attenuatedIntensity;
+    	
+        //---Diffuse Coefficient---
+        
+        vec3 lightVector = normalize(pl.center.xyz - sphere.center.xyz);
+        
+        //Don't need to do the whole complicated cosine stuff because they are already normalized
+        //max is here because if it's negative it will just default to zero
+    	diffuseCoefficient = max(0.0,dot(normal, lightVector));
+        
+        //------
+        
+        //---Attenuated intensity---
+        
+        //sphere and light distance
+        float slDist = distance(pl.center,rayOrigin);
+        
+        //Distance over intensity
+        float dOi = (slDist/pl.intensity);
+        
+        attenuatedIntensity = 1.0/(1.0 + dOi + (dOi * dOi));
+        
+    	//---Diffuse intensity---
+        
+    	diffuseIntensity = diffuseCoefficient * attenuatedIntensity;
+        
+    	//------
+        vec4 sphereColor = 
+            vec4(
+                normal,
+                1.0
+        	);
+    	
+    	vec4 finalColor = diffuseIntensity * sphereColor * pl.color;
+    	
+    	
             
-            
-        return vec4(normal * 0.5 + 0.5, 1.0);
+        return finalColor;
+        //------------------------------------------------------
         
     }
     //return vec4(0.0,1.0,1.0,1.0)
-
+    
+    
+    
+    
 	// BACKGROUND
 	const vec3 warm = vec3(0.8, 0.4, 0.2), cool = vec3(0.2, 0.4, 0.8);
 	//return vec4(mix(warm, cool, rayDirection.y), 1.0);
