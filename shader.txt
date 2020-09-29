@@ -203,16 +203,17 @@ vec4 calcColor(in vec4 rayDirection, in vec4 rayOrigin)
         
         //------
         
+        
+        
         vec4 sphereColor = 
             vec4(
                 normal * 0.5 + 0.5,
                 1.0
         	);
         
-        float globalAmbientIntensity = 0.1;
-        vec4 globalAmbientColor = vec4(0.2, 0.4, 0.8,1.0);
+        float globalAmbientIntensity = 0.4;
+        vec4 globalAmbientColor = vec4(mix(vec3(0.8, 0.4, 0.2), vec3(0.2, 0.4, 0.8),0.3),1.0);
         vec4 specReflectColor = vec4(1,1,1,1);
-        
     	
     	vec4 finalColor = 
             ( globalAmbientIntensity * globalAmbientColor ) +
@@ -232,8 +233,8 @@ vec4 calcColor(in vec4 rayDirection, in vec4 rayOrigin)
     
 	// BACKGROUND
 	const vec3 warm = vec3(0.8, 0.4, 0.2), cool = vec3(0.2, 0.4, 0.8);
-	//return vec4(mix(warm, cool, rayDirection.y), 1.0);
-    return vec4(0.5);
+	return vec4(mix(warm, cool, rayDirection.y), 1.0);
+    //return vec4(0.5);
 }
 
 // mainImage: process the current pixel (exactly one call per pixel)
