@@ -143,13 +143,13 @@ vec4 calcColor(in vec4 rayDirection, in vec4 rayOrigin)
                ),
                //Color
                vec4(
-                   0.9,
-                   0.5,
-                   0.3,
+                   0.35,
+                   0.45,
+                   0.65,
                    1.0
                ),  
                //Intensity
-               20.0
+               10.0
         );
 		
     	
@@ -182,13 +182,42 @@ vec4 calcColor(in vec4 rayDirection, in vec4 rayOrigin)
     	diffuseIntensity = diffuseCoefficient * attenuatedIntensity;
         
     	//------
+        
+        
+        //---Specular Highlights---
+        float specIntensity;   //Specular Intensity
+        float specCo;          //Specular Coefficient
+        float highExp;         //Highlight Exponent
+        vec3 viewVec;         //View Vector
+        vec3 refLiVec;        //Reflected Light Vector
+        
+        viewVec = normalize(rayOrigin.xyz - position);
+        
+        refLiVec = reflect(-lightVector,normal);
+        
+        specCo = max(0.0,dot(viewVec,refLiVec));
+        
+        highExp = 64.0;
+        
+        specIntensity = pow(specCo, highExp);
+        
+        //------
+        
         vec4 sphereColor = 
             vec4(
-                normal,
+                normal * 0.5 + 0.5,
                 1.0
         	);
+        
+        float globalAmbientIntensity = 0.1;
+        vec4 globalAmbientColor = vec4(0.2, 0.4, 0.8,1.0);
+        vec4 specReflectColor = vec4(1,1,1,1);
+        
     	
-    	vec4 finalColor = diffuseIntensity * sphereColor * pl.color;
+    	vec4 finalColor = 
+            ( globalAmbientIntensity * globalAmbientColor ) +
+            ( (diffuseIntensity * sphereColor) + (specIntensity * specReflectColor) )
+            * pl.color;
     	
     	
             
