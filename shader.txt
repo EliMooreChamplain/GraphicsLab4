@@ -94,6 +94,88 @@ void PLInit(out PointLight pl, in vec4 center, in vec4 color, in float intensity
     pl.color = color;
     pl.intensity = intensity;
 }
+
+
+
+vec4 addLight(
+    in PointLight pl,
+    in sSphere sphere,
+    in vec3 normal,
+    in vec3 position,
+    in vec4 rayOrigin
+	)
+{
+    float diffuseIntensity;
+    float diffuseCoefficient;
+    float attenuatedIntensity;
+    
+    //---Diffuse Coefficient---
+        
+    vec3 lightVector = normalize(pl.center.xyz - sphere.center.xyz);
+        
+    //Don't need to do the whole complicated cosine stuff because they are already normalized
+    //max is here because if it's negative it will just default to zero
+    diffuseCoefficient = max(0.0,dot(normal, lightVector));
+    
+    //------
+    
+    //---Attenuated intensity---
+    
+    //sphere and light distance
+    float slDist = distance(pl.center,rayOrigin);
+    
+    //Distance over intensity
+    float dOi = (slDist/pl.intensity);
+    
+    attenuatedIntensity = 1.0/(1.0 + dOi + (dOi * dOi));
+    
+    //---Diffuse intensity---
+        
+    diffuseIntensity = diffuseCoefficient * attenuatedIntensity;
+        
+    //------
+        
+        
+    //---Specular Highlights---
+    float specIntensity;   //Specular Intensity
+    float specCo;          //Specular Coefficient
+    float highExp;         //Highlight Exponent
+    vec3 viewVec;         //View Vector
+    vec3 refLiVec;        //Reflected Light Vector
+        
+    viewVec = normalize(rayOrigin.xyz - position);
+        
+    refLiVec = reflect(-lightVector,normal);
+        
+    specCo = max(0.0,dot(viewVec,refLiVec));
+        
+    highExp = 64.0;
+        
+    specIntensity = pow(specCo, highExp);
+        
+    //------
+        
+        
+        
+    vec4 sphereColor = 
+        vec4(
+            normal * 0.5 + 0.5,
+            1.0
+        );
+    
+    float globalAmbientIntensity = 0.4;
+    vec4 globalAmbientColor = vec4(mix(vec3(0.8, 0.4, 0.2), vec3(0.2, 0.4, 0.8),0.3),1.0);
+    vec4 specReflectColor = vec4(1,1,1,1);
+        
+    vec4 finalColor = 
+            ( globalAmbientIntensity * globalAmbientColor ) +
+            ( (diffuseIntensity * sphereColor) + (specIntensity * specReflectColor) )
+            * pl.color;
+    	
+    	
+            
+    return finalColor;
+}
     
 
 // calcColor: calculate the color of a pixel given a ray
@@ -153,76 +235,8 @@ vec4 calcColor(in vec4 rayDirection, in vec4 rayOrigin)
         );
 		
     	
-    	float diffuseIntensity;
-    	float diffuseCoefficient;
-    	float attenuatedIntensity;
-    	
-        //---Diffuse Coefficient---
-        
-        vec3 lightVector = normalize(pl.center.xyz - sphere.center.xyz);
-        
-        //Don't need to do the whole complicated cosine stuff because they are already normalized
-        //max is here because if it's negative it will just default to zero
-    	diffuseCoefficient = max(0.0,dot(normal, lightVector));
-        
-        //------
-        
-        //---Attenuated intensity---
-        
-        //sphere and light distance
-        float slDist = distance(pl.center,rayOrigin);
-        
-        //Distance over intensity
-        float dOi = (slDist/pl.intensity);
-        
-        attenuatedIntensity = 1.0/(1.0 + dOi + (dOi * dOi));
-        
-    	//---Diffuse intensity---
-        
-    	diffuseIntensity = diffuseCoefficient * attenuatedIntensity;
-        
-    	//------
-        
-        
-        //---Specular Highlights---
-        float specIntensity;   //Specular Intensity
-        float specCo;          //Specular Coefficient
-        float highExp;         //Highlight Exponent
-        vec3 viewVec;         //View Vector
-        vec3 refLiVec;        //Reflected Light Vector
-        
-        viewVec = normalize(rayOrigin.xyz - position);
-        
-        refLiVec = reflect(-lightVector,normal);
-        
-        specCo = max(0.0,dot(viewVec,refLiVec));
-        
-        highExp = 64.0;
-        
-        specIntensity = pow(specCo, highExp);
-        
-        //------
-        
-        
-        
-        vec4 sphereColor = 
-            vec4(
-                normal * 0.5 + 0.5,
-                1.0
-        	);
-        
-        float globalAmbientIntensity = 0.4;
-        vec4 globalAmbientColor = vec4(mix(vec3(0.8, 0.4, 0.2), vec3(0.2, 0.4, 0.8),0.3),1.0);
-        vec4 specReflectColor = vec4(1,1,1,1);
-    	
-    	vec4 finalColor = 
-            ( globalAmbientIntensity * globalAmbientColor ) +
-            ( (diffuseIntensity * sphereColor) + (specIntensity * specReflectColor) )
-            * pl.color;
-    	
-    	
-            
-        return finalColor;
+    	    
+        return addLight(pl,sphere,normal,position,rayOrigin);
         //------------------------------------------------------
         
     }
